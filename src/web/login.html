@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MarkoDoc — Sign in</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --paper: #faf9f7; --ink: #1a1a1a; --ink-soft: #666;
+    --line: #e5e2dc; --accent: #1f5d4c; --accent-ink: #155240;
+  }
+  body { background: var(--paper); color: var(--ink); font-family: system-ui, sans-serif;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 6px;
+    padding: 40px 36px; width: 100%; max-width: 360px; }
+  .logo { font-family: monospace; font-size: 14px; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase; margin-bottom: 28px; color: var(--ink); }
+  .logo span { color: var(--ink-soft); font-weight: 400; margin-left: 8px; font-size: 11px; }
+  label { display: block; font-size: 11px; color: var(--ink-soft);
+    letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px; }
+  input[type=password] { width: 100%; padding: 10px 12px; border: 1px solid var(--line);
+    border-radius: 3px; font-size: 14px; font-family: monospace; background: var(--paper);
+    color: var(--ink); outline: none; }
+  input[type=password]:focus { border-color: var(--accent); }
+  button { width: 100%; margin-top: 16px; padding: 10px; background: var(--accent);
+    color: #fff; border: none; border-radius: 3px; font-size: 14px;
+    font-weight: 600; cursor: pointer; }
+  button:hover { background: var(--accent-ink); }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">MarkoDoc <span>terms monitor</span></div>
+  <form method="POST" action="/auth/login">
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autofocus autocomplete="current-password" />
+    <!--ERROR-->
+    <button type="submit">Sign in</button>
+  </form>
+</div>
+</body>
+</html>

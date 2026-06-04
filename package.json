@@ -1,0 +1,33 @@
+{
+  "name": "markodoc",
+  "version": "0.1.0",
+  "description": "Capture accepted SaaS/AI terms of use, watch them for changes, and classify those changes against GDPR, the EU AI Act, and custom rules.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx src/cli.ts",
+    "serve": "tsx src/web/server.ts",
+    "schedule": "tsx src/scheduler.ts",
+    "poll": "tsx src/cli.ts check --all",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "better-sqlite3": "^11.3.0",
+    "commander": "^12.1.0",
+    "diff": "^5.2.0",
+    "dotenv": "^16.4.5",
+    "linkedom": "^0.18.12",
+    "nodemailer": "^8.0.10"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/diff": "^5.2.3",
+    "@types/node": "^22.7.0",
+    "@types/nodemailer": "^8.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

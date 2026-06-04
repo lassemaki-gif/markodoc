@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MarkoDoc — terms watch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,560;9..144,640&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #f4f1ea;
+    --paper-2: #ece6d8;
+    --panel: #fbf9f3;
+    --ink: #1c1b18;
+    --ink-soft: #6a655a;
+    --line: #d9d3c4;
+    --accent: #1f5d4c;
+    --accent-ink: #143f33;
+    --sev-critical: #a8322a;
+    --sev-high: #bd5f2c;
+    --sev-medium: #a8842a;
+    --sev-low: #5d7a4f;
+    --sev-info: #6b6f76;
+    --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+    --sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(31,93,76,.07), transparent 60%),
+      var(--paper);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent-ink); }
+
+  header {
+    border-bottom: 1px solid var(--line);
+    padding: 28px 32px 22px;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 24px; flex-wrap: wrap;
+    animation: rise .5s ease both;
+  }
+  .brand { display: flex; align-items: baseline; gap: 14px; }
+  .brand h1 { font-family: var(--serif); font-weight: 640; font-size: 34px; letter-spacing: -.5px; margin: 0; line-height: 1; }
+  .brand .tag {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink-soft); border-left: 1px solid var(--line); padding-left: 14px;
+  }
+  .statusbar { font-family: var(--mono); font-size: 12px; color: var(--ink-soft); display: flex; gap: 18px; align-items: center; }
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-right: 7px; vertical-align: middle; }
+  .dot.mock { background: var(--sev-medium); }
+  #previewflag { display: none; color: var(--sev-medium); }
+
+  main { display: grid; grid-template-columns: 360px 1fr; gap: 0; min-height: calc(100vh - 92px); }
+  @media (max-width: 820px) { main { grid-template-columns: 1fr; } }
+
+  aside { border-right: 1px solid var(--line); padding: 24px; background: linear-gradient(var(--paper), var(--paper-2)); animation: rise .5s ease .06s both; }
+  section.feed { padding: 24px 32px 64px; animation: rise .5s ease .12s both; }
+
+  h2.section { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-soft); margin: 0 0 14px; font-weight: 500; }
+
+  .field { margin-bottom: 12px; }
+  label { display: block; font-size: 12px; color: var(--ink-soft); margin-bottom: 5px; letter-spacing: .02em; }
+  input, select { width: 100%; font-family: var(--sans); font-size: 14px; padding: 9px 11px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 2px; }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: var(--accent); }
+  input.mono { font-family: var(--mono); font-size: 13px; }
+
+  button {
+    font-family: var(--sans); font-size: 13px; font-weight: 600; padding: 9px 14px; border-radius: 2px; cursor: pointer;
+    border: 1px solid var(--accent-ink); background: var(--accent); color: #f4f1ea;
+    transition: transform .08s ease, background .15s ease;
+  }
+  button:hover { background: var(--accent-ink); }
+  button:active { transform: translateY(1px); }
+  button.ghost { background: transparent; color: var(--accent-ink); }
+  button.ghost:hover { background: rgba(31,93,76,.08); }
+  button.small { padding: 5px 10px; font-size: 12px; font-weight: 500; }
+  button[disabled] { opacity: .5; cursor: progress; }
+
+  .actions { display: flex; gap: 8px; margin: 18px 0 26px; flex-wrap: wrap; }
+  details.compare-panel { margin-bottom: 26px; }
+  details.compare-panel summary { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); cursor: pointer; padding: 4px 0; user-select: none; }
+  details.compare-panel summary:hover { color: var(--ink); }
+  details.compare-panel .inner { padding-top: 12px; display: flex; flex-direction: column; gap: 0; }
+
+  .vendor-group { margin-bottom: 16px; }
+  .vendor-group .vendor-name { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); padding: 4px 0; margin-bottom: 6px; border-bottom: 1px solid var(--line); }
+  .doc { border: 1px solid var(--line); border-radius: 3px; background: var(--panel); padding: 13px 14px; margin-bottom: 6px; }
+  .doc .name { font-weight: 600; font-size: 14px; }
+  .doc .meta { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); margin-top: 3px; word-break: break-all; }
+  .doc .row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .doc .controls { display: flex; gap: 6px; margin-top: 10px; }
+
+  .tier { font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; padding: 2px 7px; border-radius: 2px; border: 1px solid var(--line); color: var(--ink-soft); white-space: nowrap; }
+  .tier.commercial { color: var(--accent-ink); border-color: var(--accent); background: rgba(31,93,76,.07); }
+
+  .empty { color: var(--ink-soft); font-size: 13px; font-style: italic; padding: 8px 0; }
+
+  /* feed entries */
+  .entry { border: 1px solid var(--line); border-left: 3px solid var(--ink-soft); background: var(--panel); border-radius: 3px; padding: 16px 18px; margin-bottom: 14px; animation: rise .35s ease both; }
+  .entry.changed { border-left-color: var(--sev-high); }
+  .entry.unchanged, .entry.first_snapshot { border-left-color: var(--sev-low); }
+  .entry.error { border-left-color: var(--sev-critical); }
+  .entry h3 { margin: 0 0 4px; font-family: var(--serif); font-weight: 560; font-size: 18px; }
+  .entry .when { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+  .entry .summary { margin: 10px 0 4px; }
+  .status-word { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+
+  /* diff */
+  .diff { margin-top: 14px; border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
+  .diff .diffhead { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); padding: 7px 12px; background: var(--paper-2); border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; }
+  .diff .body { max-height: 300px; overflow: auto; font-family: var(--mono); font-size: 12.5px; line-height: 1.55; padding: 4px 0; }
+  .diffline { padding: 1px 12px; white-space: pre-wrap; word-break: break-word; display: flex; gap: 9px; }
+  .diffline .mark { flex: 0 0 1ch; opacity: .65; }
+  .diffline.add { background: rgba(93,122,79,.16); color: #33491f; }
+  .diffline.del { background: rgba(168,50,42,.10); color: #7c2a24; }
+  .diffline.ctx { color: var(--ink-soft); }
+
+  /* findings */
+  .findings { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 12px; }
+  .finding { padding: 9px 0; border-bottom: 1px dotted var(--line); }
+  .finding:last-child { border-bottom: 0; }
+  .finding .head { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+  .finding .title { font-weight: 600; font-size: 14px; }
+  .finding .rule { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+  .finding .expl { font-size: 13px; color: var(--ink-soft); margin: 5px 0 0; }
+  .finding .excerpt { font-family: var(--mono); font-size: 12px; margin-top: 6px; padding: 7px 10px; background: var(--paper-2); border-radius: 2px; border-left: 2px solid var(--line); white-space: pre-wrap; word-break: break-word; }
+  .filtered-note { font-size: 12px; color: var(--ink-soft); font-style: italic; margin-top: 8px; }
+
+  .sev { font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; padding: 2px 8px; border-radius: 2px; color: #fff; white-space: nowrap; }
+  .sev.critical { background: var(--sev-critical); }
+  .sev.high { background: var(--sev-high); }
+  .sev.medium { background: var(--sev-medium); }
+  .sev.low { background: var(--sev-low); }
+  .sev.info { background: var(--sev-info); }
+  .conf { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+
+  /* severity filter pills */
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+  .filters .lbl { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); letter-spacing: .08em; text-transform: uppercase; }
+  .pill { cursor: pointer; user-select: none; border: 1px solid rgba(0,0,0,.08); }
+  .pill.off { opacity: .3; filter: grayscale(.6); }
+  .filters .hint { font-size: 11px; color: var(--ink-soft); font-style: italic; }
+
+  /* filter visibility (applied to current + future findings) */
+  body.hide-critical .finding.sev-critical,
+  body.hide-high .finding.sev-high,
+  body.hide-medium .finding.sev-medium,
+  body.hide-low .finding.sev-low,
+  body.hide-info .finding.sev-info { display: none; }
+
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <h1>MarkoDoc</h1>
+      <span class="tag">terms watch</span>
+    </div>
+    <div class="statusbar">
+      <span id="classifier"><span class="dot"></span>loading…</span>
+      <span id="previewflag">● preview · sample data</span>
+      <span id="doccount">—</span>
+    </div>
+  </header>
+
+  <main>
+    <aside>
+      <h2 class="section">Monitor a terms page</h2>
+      <div class="field"><label for="url">Terms URL</label><input id="url" class="mono" placeholder="https://vendor.com/terms" /></div>
+      <div class="field"><label for="name">Name</label><input id="name" placeholder="Vendor AI" /></div>
+      <div class="field"><label for="vendor">Vendor (optional)</label><input id="vendor" placeholder="Vendor Inc" /></div>
+      <div class="field"><label for="tier">Tier</label>
+        <select id="tier">
+          <option value="free">free — summary only</option>
+          <option value="commercial" selected>commercial — summary + findings</option>
+        </select>
+      </div>
+      <div class="field"><label for="interval">Check interval</label>
+        <select id="interval">
+          <option value="">global default</option>
+          <option value="15">every 15 min</option>
+          <option value="30">every 30 min</option>
+          <option value="60">every hour</option>
+          <option value="360">every 6 hours</option>
+          <option value="720">every 12 hours</option>
+          <option value="1440">every 24 hours</option>
+        </select>
+      </div>
+      <button id="add">Add to watchlist</button>
+      <div class="filtered-note" id="toast" style="color:var(--sev-critical)"></div>
+
+      <div class="actions">
+        <button class="ghost" id="checkall">Run all checks</button>
+        <button class="ghost" id="demo">Load offline demo</button>
+      </div>
+
+      <details class="compare-panel">
+        <summary>▶ Compare two versions</summary>
+        <div class="inner">
+          <div class="field"><label for="cmp-name">Name</label><input id="cmp-name" placeholder="Vendor Privacy Policy" /></div>
+          <div class="field"><label for="cmp-vendor">Vendor (optional)</label><input id="cmp-vendor" placeholder="Vendor Inc" /></div>
+          <div class="field"><label for="cmp-url-a">Old version URL</label><input id="cmp-url-a" class="mono" placeholder="https://…/archive-2024" /></div>
+          <div class="field"><label for="cmp-url-b">New version URL</label><input id="cmp-url-b" class="mono" placeholder="https://…/privacy-policy" /></div>
+          <div class="field"><label for="cmp-tier">Tier</label>
+            <select id="cmp-tier">
+              <option value="free">free — summary only</option>
+              <option value="commercial" selected>commercial — summary + findings</option>
+            </select>
+          </div>
+          <button id="compare">Compare</button>
+          <div id="cmp-toast" style="color:var(--sev-critical);margin-top:6px;font-size:13px"></div>
+        </div>
+      </details>
+
+      <h2 class="section">Watchlist</h2>
+      <div id="docs"><div class="empty">No documents yet.</div></div>
+    </aside>
+
+    <section class="feed">
+      <h2 class="section">Activity</h2>
+      <div class="filters" id="filters"><span class="lbl">Severity</span><span class="hint">tap to filter</span></div>
+      <div id="feed" style="margin-top:18px">
+        <div class="empty">Add a terms page and run a check, or load the offline demo to see how a data-residency shift is flagged — with the full before/after diff and findings.</div>
+      </div>
+    </section>
+  </main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+/* ---------------- offline sample data (used when no backend is reachable) -- */
+let PREVIEW = false;
+const DEMO_SUMMARY = "Terms updated: processing expands from the EU to the United States, customer content may now be used to train ML models, a US analytics sub-processor is added, data-subject rights are narrowed, and retention extends from 12 to 36 months.";
+const DEMO_DIFF = [
+  "- We process your personal data within the European Union.",
+  "- All customer data is stored in data centres located in Frankfurt, Germany.",
+  "- We do not use your content to train our models.",
+  "- We engage the following sub-processors: Hetzner (hosting, Germany).",
+  "- You may request access to or erasure of your personal data at any time.",
+  "- We retain your data for 12 months after account closure.",
+  "+ We process your personal data globally.",
+  "+ Customer data may be stored and processed in the United States and other regions.",
+  "+ We may use your content and usage data to train and improve our machine learning models.",
+  "+ We engage the following sub-processors: Hetzner (hosting, Germany) and a third-party analytics provider based in the United States.",
+  "+ You may request access to your personal data.",
+  "+ We retain your data for 36 months after account closure.",
+].join("\n");
+const DEMO_FINDINGS = [
+  { severity: "high", framework: "data_transfer", rule_code: "DT-RESIDENCY", confidence: 0.42, title: "Personal data may now leave the EU", explanation: "Processing location expanded from the EU to the United States and 'other regions' — a transfer to a third country that needs a valid transfer mechanism (Chapter V).", excerpt: "Customer data may be stored and processed in the United States and other regions." },
+  { severity: "high", framework: "data_transfer", rule_code: "DT-SUBPROCESSOR", confidence: 0.40, title: "New US-based sub-processor added", explanation: "A third-party analytics provider in the US now has access to data. Sub-processor changes typically require notice/review under Art. 28.", excerpt: "...and a third-party analytics provider based in the United States." },
+  { severity: "medium", framework: "gdpr", rule_code: "GDPR-TRAINING", confidence: 0.40, title: "Content may be used to train models", explanation: "Customer content and usage data may now be used to train ML models — a new processing purpose.", excerpt: "We may use your content and usage data to train and improve our machine learning models." },
+  { severity: "medium", framework: "gdpr", rule_code: "GDPR-RETENTION", confidence: 0.38, title: "Retention extended 12 → 36 months", explanation: "Data is kept three times longer after account closure — relevant to storage limitation (Art. 5(1)(e)).", excerpt: "We retain your data for 36 months after account closure." },
+  { severity: "low", framework: "gdpr", rule_code: "GDPR-RIGHTS", confidence: 0.35, title: "Data-subject rights narrowed", explanation: "The explicit right to erasure was dropped from the data-subject rights sentence.", excerpt: "You may request access to your personal data." },
+];
+const MOCK = {
+  status: { classifier: "mock", autopoll: false, pollIntervalMinutes: 60 },
+  docs: [
+    { id: 1, name: "Acme AI (demo)", vendor: "Acme Inc", url: "https://acme.ai/terms", tier: "commercial" },
+    { id: 2, name: "NoteKeeper", vendor: "NoteKeeper Oy", url: "https://notekeeper.app/legal/terms", tier: "free" },
+  ],
+};
+const demoChange = () => ({ id: 101, summary: DEMO_SUMMARY, detected_at: "2026-06-03 09:14:00", diff_text: DEMO_DIFF, findings: DEMO_FINDINGS });
+const changedOutcome = (doc) => ({ id: doc.id, name: doc.name, status: "changed", summary: DEMO_SUMMARY, diff: DEMO_DIFF, findings: DEMO_FINDINGS });
+function enterPreview() {
+  if (PREVIEW) return;
+  PREVIEW = true;
+  $("previewflag").style.display = "inline";
+}
+function mockGet(path) {
+  if (path === "/api/status") return MOCK.status;
+  if (path === "/api/documents") return { documents: MOCK.docs };
+  const h = path.match(/^\/api\/documents\/(\d+)\/history$/);
+  if (h) return { changes: Number(h[1]) === 1 ? [demoChange()] : [] };
+  return {};
+}
+function mockPost(path, body) {
+  if (path === "/api/documents") {
+    const d = { id: MOCK.docs.length + 1, name: body.name, vendor: body.vendor || null, url: body.url, tier: body.tier || "free" };
+    MOCK.docs.push(d);
+    return { document: d };
+  }
+  if (path === "/api/check-all") return { outcomes: [changedOutcome(MOCK.docs[0]), { id: 2, name: "NoteKeeper", status: "unchanged" }] };
+  if (path === "/api/demo") return { document: MOCK.docs[0], change: demoChange(), findings: DEMO_FINDINGS };
+  const c = path.match(/^\/api\/documents\/(\d+)\/check$/);
+  if (c) {
+    const id = Number(c[1]); const doc = MOCK.docs.find((x) => x.id === id);
+    return { outcome: id === 1 ? changedOutcome(doc) : { id, name: doc ? doc.name : "?", status: "first_snapshot" } };
+  }
+  return {};
+}
+
+/* ---------------- API layer (live, with offline fallback) ----------------- */
+async function getJSON(path) {
+  if (PREVIEW) return mockGet(path);
+  let r;
+  try { r = await fetch(path); }
+  catch (e) { enterPreview(); return mockGet(path); }      // backend unreachable
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+  return r.json();
+}
+async function postJSON(path, body, method = "POST") {
+  if (PREVIEW && method === "POST") return mockPost(path, body || {});
+  let r;
+  try {
+    r = await fetch(path, { method, headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+  } catch (e) { if (method === "POST") { enterPreview(); return mockPost(path, body || {}); } throw e; }
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+  return r.json();
+}
+
+/* ---------------- rendering ----------------------------------------------- */
+let feedEmpty = true;
+function prependEntry(html) {
+  const feed = $("feed");
+  if (feedEmpty) { feed.innerHTML = ""; feedEmpty = false; }
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  feed.prepend(div.firstElementChild);
+}
+
+function diffHtml(diffText) {
+  if (!diffText) return "";
+  let adds = 0, dels = 0;
+  const rows = diffText.split("\n").map((line) => {
+    let cls = "ctx", mark = " ", text = line;
+    if (line.startsWith("+ ")) { cls = "add"; mark = "+"; text = line.slice(2); adds++; }
+    else if (line.startsWith("- ")) { cls = "del"; mark = "\u2212"; text = line.slice(2); dels++; }
+    return `<div class="diffline ${cls}"><span class="mark">${mark}</span><span>${esc(text)}</span></div>`;
+  }).join("");
+  return `<div class="diff">
+    <div class="diffhead"><span>before \u2192 after</span><span>+${adds} \u00b7 \u2212${dels}</span></div>
+    <div class="body">${rows}</div>
+  </div>`;
+}
+
+function findingHtml(f) {
+  const sev = esc(f.severity);
+  return `<div class="finding sev-${sev}">
+    <div class="head">
+      <span class="sev ${sev}">${sev}</span>
+      <span class="title">${esc(f.title)}</span>
+      <span class="rule">${esc(f.framework)} \u00b7 ${esc(f.rule_code)}</span>
+      <span class="conf">conf ${Number(f.confidence).toFixed(2)}</span>
+    </div>
+    ${f.explanation ? `<p class="expl">${esc(f.explanation)}</p>` : ""}
+    ${f.excerpt ? `<div class="excerpt">${esc(f.excerpt)}</div>` : ""}
+  </div>`;
+}
+
+function outcomeHtml(name, o) {
+  const status = o.status;
+  const findings = o.findings || [];
+  let body;
+  if (status === "changed") {
+    body = `<p class="summary">${esc(o.summary)}</p>` +
+      diffHtml(o.diff) +
+      (findings.length
+        ? `<div class="findings">${findings.map(findingHtml).join("")}<p class="filtered-note">${findings.length} finding(s) · adjust the severity filter above to focus.</p></div>`
+        : `<p class="expl">No framework findings (free tier or none matched).</p>`);
+  } else if (status === "error") {
+    body = `<p class="summary">${esc(o.error)}</p>`;
+  } else if (status === "first_snapshot") {
+    body = `<p class="summary">Baseline captured. Future checks compare against this.</p>`;
+  } else {
+    body = `<p class="summary">No change since the last snapshot.</p>`;
+  }
+  return `<div class="entry ${esc(status)}">
+    <div class="when">${new Date().toLocaleTimeString()}</div>
+    <h3>${esc(name)}</h3>
+    <span class="status-word">${esc(status.replace("_", " "))}</span>
+    ${body}
+  </div>`;
+}
+
+function intervalLabel(minutes) {
+  if (!minutes) return "global";
+  if (minutes < 60) return `${minutes}m`;
+  if (minutes < 1440) return `${minutes / 60}h`;
+  return `${minutes / 1440}d`;
+}
+
+function docHtml(d) {
+  return `<div class="doc">
+    <div class="row">
+      <div>
+        <div class="name">${esc(d.name)}</div>
+        <div class="meta">${esc(d.url)}</div>
+      </div>
+      <span class="tier ${d.tier === "commercial" ? "commercial" : ""}">${esc(d.tier)}</span>
+    </div>
+    <div class="controls">
+      <button class="small" data-check="${d.id}">Check now</button>
+      <button class="small ghost" data-history="${d.id}">History</button>
+      <button class="small ghost" data-edit="${d.id}" data-interval="${d.check_interval_minutes ?? ""}">&#9201; ${esc(intervalLabel(d.check_interval_minutes))}</button>
+    </div>
+  </div>`;
+}
+
+function groupByVendor(documents) {
+  const groups = new Map();
+  for (const d of documents) {
+    const key = d.vendor || "\u2014";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(d);
+  }
+  return groups;
+}
+
+function docsHtml(documents) {
+  if (!documents.length) return `<div class="empty">No documents yet.</div>`;
+  const groups = groupByVendor(documents);
+  let html = "";
+  for (const [vendor, docs] of groups) {
+    html += `<div class="vendor-group">
+      <div class="vendor-name">${esc(vendor)}</div>
+      ${docs.map(docHtml).join("")}
+    </div>`;
+  }
+  return html;
+}
+
+/* ---------------- severity filter ----------------------------------------- */
+const SEVS = ["critical", "high", "medium", "low", "info"];
+function setupFilters() {
+  const wrap = $("filters");
+  wrap.insertAdjacentHTML("beforeend",
+    SEVS.map((s) => `<span class="sev ${s} pill" data-sev="${s}">${s}</span>`).join(""));
+  wrap.addEventListener("click", (e) => {
+    const p = e.target.closest(".pill");
+    if (!p) return;
+    const s = p.getAttribute("data-sev");
+    p.classList.toggle("off");
+    document.body.classList.toggle("hide-" + s, p.classList.contains("off"));
+  });
+}
+
+/* ---------------- data loads + actions ------------------------------------ */
+async function loadStatus() {
+  try {
+    const s = await getJSON("/api/status");
+    const mock = s.classifier === "mock";
+    $("classifier").innerHTML = `<span class="dot ${mock ? "mock" : ""}"></span>classifier: ${esc(s.classifier)}${mock ? " (offline)" : ""}`;
+  } catch (e) { /* keep default */ }
+}
+async function loadDocs() {
+  const { documents } = await getJSON("/api/documents");
+  $("doccount").textContent = `${documents.length} watched`;
+  $("docs").innerHTML = docsHtml(documents);
+}
+async function withBusy(btn, fn) {
+  const prev = btn.textContent;
+  btn.disabled = true;
+  try { await fn(); }
+  catch (e) { $("toast").textContent = e.message || String(e); }
+  finally { btn.disabled = false; btn.textContent = prev; }
+}
+
+$("add").addEventListener("click", () => withBusy($("add"), async () => {
+  $("toast").textContent = "";
+  const intervalVal = $("interval").value;
+  const body = {
+    url: $("url").value.trim(),
+    name: $("name").value.trim(),
+    vendor: $("vendor").value.trim(),
+    tier: $("tier").value,
+    check_interval_minutes: intervalVal ? Number(intervalVal) : null,
+  };
+  if (!body.url || !body.name) { $("toast").textContent = "URL and name are required."; return; }
+  await postJSON("/api/documents", body);
+  $("url").value = ""; $("name").value = ""; $("vendor").value = ""; $("interval").value = "";
+  await loadDocs();
+}));
+
+$("compare").addEventListener("click", () => withBusy($("compare"), async () => {
+  $("cmp-toast").textContent = "";
+  const body = {
+    name: $("cmp-name").value.trim() || "Comparison",
+    vendor: $("cmp-vendor").value.trim(),
+    urlA: $("cmp-url-a").value.trim(),
+    urlB: $("cmp-url-b").value.trim(),
+    tier: $("cmp-tier").value,
+  };
+  if (!body.urlA || !body.urlB) { $("cmp-toast").textContent = "Both URLs are required."; return; }
+  const r = await postJSON("/api/compare", body);
+  await loadDocs();
+  if (r.status === "unchanged") {
+    prependEntry(outcomeHtml(body.name, { status: "unchanged" }));
+  } else {
+    prependEntry(outcomeHtml(r.name, { status: "changed", summary: r.summary, diff: r.diff, findings: r.findings }));
+  }
+}));
+
+$("checkall").addEventListener("click", () => withBusy($("checkall"), async () => {
+  const { outcomes } = await postJSON("/api/check-all");
+  if (!outcomes.length) { prependEntry(outcomeHtml("Watchlist", { status: "unchanged" })); return; }
+  for (const o of outcomes) prependEntry(outcomeHtml(o.name, o));
+}));
+
+$("demo").addEventListener("click", () => withBusy($("demo"), async () => {
+  const r = await postJSON("/api/demo");
+  await loadDocs();
+  prependEntry(outcomeHtml(r.document.name, { status: "changed", summary: r.change.summary, diff: r.change.diff_text, findings: r.findings }));
+}));
+
+$("docs").addEventListener("click", async (e) => {
+  const checkId = e.target.getAttribute("data-check");
+  const histId = e.target.getAttribute("data-history");
+  if (checkId) {
+    await withBusy(e.target, async () => {
+      const { outcome } = await postJSON(`/api/documents/${checkId}/check`);
+      prependEntry(outcomeHtml(outcome.name, outcome));
+    });
+  } else if (histId) {
+    await withBusy(e.target, async () => {
+      const { changes } = await getJSON(`/api/documents/${histId}/history`);
+      const name = e.target.closest(".doc").querySelector(".name").textContent;
+      if (!changes.length) { prependEntry(outcomeHtml(name, { status: "unchanged" })); return; }
+      for (const c of changes) {
+        prependEntry(outcomeHtml(`${name} \u2014 ${new Date(c.detected_at + "Z").toLocaleString()}`,
+          { status: "changed", summary: c.summary, diff: c.diff_text, findings: c.findings }));
+      }
+    });
+  } else if (e.target.hasAttribute("data-edit")) {
+    const id = e.target.getAttribute("data-edit");
+    const current = e.target.getAttribute("data-interval");
+    const OPTS = [["", "global default"], ["15", "15 min"], ["30", "30 min"], ["60", "1 hour"], ["360", "6 hours"], ["720", "12 hours"], ["1440", "24 hours"]];
+    const choice = prompt(
+      "Set check interval for this document:\n" +
+      OPTS.map(([v, l], i) => `${i + 1}. ${l}${v === current ? " \u2713" : ""}`).join("\n") +
+      "\n\nEnter number (1-7):"
+    );
+    if (!choice) return;
+    const idx = Number(choice) - 1;
+    if (idx < 0 || idx >= OPTS.length) return;
+    const [val] = OPTS[idx];
+    await postJSON(`/api/documents/${id}`, { check_interval_minutes: val ? Number(val) : null }, "PATCH");
+    await loadDocs();
+  }
+});
+
+setupFilters();
+loadStatus();
+loadDocs().catch((e) => { $("toast").textContent = e.message; });
+</script>
+</body>
+</html>
