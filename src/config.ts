@@ -7,8 +7,8 @@ import "dotenv/config";
 export const config = {
   /** SQLite file path. Swap for a Postgres layer when going multi-tenant. */
   dbPath: process.env.MARKODOC_DB ?? "./markodoc.db",
-  /** Host to bind to. Use 0.0.0.0 in production. */
-  host: process.env.HOST ?? "127.0.0.1",
+  /** Host to bind to. Defaults to 0.0.0.0 for container/cloud deployments. */
+  host: process.env.HOST ?? "0.0.0.0",
   /** If set, the dashboard requires a password to access. */
   password: process.env.MARKODOC_PASSWORD ?? "",
   /** Default tier applied to newly added documents unless overridden. */
