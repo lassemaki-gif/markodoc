@@ -1,5 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { createHmac } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { config } from "../config.js";
@@ -30,9 +30,52 @@ const LOGIN_HTML = fileURLToPath(new URL("./login.html", import.meta.url));
 
 // --- auth -------------------------------------------------------------------
 
+// Random secret generated at startup — every restart invalidates old sessions.
+const SESSION_SECRET = randomBytes(32).toString("hex");
+
 function sessionToken(): string {
-  return createHmac("sha256", config.password).update("markodoc-v1").digest("hex");
+  return createHmac("sha256", SESSION_SECRET).update("markodoc-v1:" + config.password).digest("hex");
 }
+
+// --- rate limiting (login) --------------------------------------------------
+
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+const LOGIN_MAX = 10;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
+function checkLoginRate(ip: string): boolean {
+  const now = Date.now();
+  const entry = loginAttempts.get(ip);
+  if (!entry || entry.resetAt < now) {
+    loginAttempts.set(ip, { count: 1, resetAt: now + LOGIN_WINDOW_MS });
+    return true;
+  }
+  entry.count++;
+  return entry.count <= LOGIN_MAX;
+}
+
+// --- security headers -------------------------------------------------------
+
+const CSP = [
+  "default-src 'none'",
+  "script-src 'unsafe-inline'",
+  "style-src 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src https://fonts.gstatic.com",
+  "connect-src 'self'",
+  "img-src 'self' data:",
+].join("; ");
+
+function addSecurityHeaders(res: ServerResponse): void {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Content-Security-Policy", CSP);
+  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+}
+
+// --- request body limits ----------------------------------------------------
+
+const MAX_BODY_BYTES = 512 * 1024; // 512 KB
 
 function getCookie(req: IncomingMessage, name: string): string | undefined {
   return req.headers.cookie
@@ -47,10 +90,20 @@ function isAuthenticated(req: IncomingMessage): boolean {
   return getCookie(req, "md_session") === sessionToken();
 }
 
-async function readForm(req: IncomingMessage): Promise<Record<string, string>> {
+async function readRawBody(req: IncomingMessage): Promise<Buffer> {
   const chunks: Buffer[] = [];
-  for await (const chunk of req) chunks.push(chunk as Buffer);
-  return Object.fromEntries(new URLSearchParams(Buffer.concat(chunks).toString()).entries());
+  let total = 0;
+  for await (const chunk of req) {
+    total += (chunk as Buffer).length;
+    if (total > MAX_BODY_BYTES) throw new Error("Request body too large");
+    chunks.push(chunk as Buffer);
+  }
+  return Buffer.concat(chunks);
+}
+
+async function readForm(req: IncomingMessage): Promise<Record<string, string>> {
+  const raw = await readRawBody(req);
+  return Object.fromEntries(new URLSearchParams(raw.toString()).entries());
 }
 
 function sendJson(res: ServerResponse, status: number, body: unknown): void {
@@ -64,9 +117,7 @@ function sendJson(res: ServerResponse, status: number, body: unknown): void {
 }
 
 async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of req) chunks.push(chunk as Buffer);
-  const raw = Buffer.concat(chunks).toString("utf8").trim();
+  const raw = (await readRawBody(req)).toString("utf8").trim();
   if (!raw) return {};
   try {
     return JSON.parse(raw) as Record<string, unknown>;
@@ -92,12 +143,19 @@ function serializeOutcome(o: CheckOutcome) {
 }
 
 async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  addSecurityHeaders(res);
+
   const url = new URL(req.url ?? "/", "http://localhost");
   const path = url.pathname;
   const method = req.method ?? "GET";
 
   // --- auth ---------------------------------------------------------------
   if (method === "POST" && path === "/auth/login") {
+    const ip = req.socket.remoteAddress ?? "unknown";
+    if (!checkLoginRate(ip)) {
+      sendJson(res, 429, { error: "Too many login attempts. Try again later." });
+      return;
+    }
     const form = await readForm(req);
     if (form.password && form.password === config.password) {
       const cookie = `md_session=${sessionToken()}; HttpOnly; SameSite=Lax; Max-Age=2592000; Path=/`;
@@ -144,16 +202,6 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
     const html = readFileSync(INDEX_HTML, "utf8");
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     res.end(html);
-    return;
-  }
-
-  // --- status -------------------------------------------------------------
-  if (method === "GET" && path === "/api/status") {
-    sendJson(res, 200, {
-      classifier: getProvider().name,
-      autopoll: config.webAutopoll,
-      pollIntervalMinutes: config.pollIntervalMinutes,
-    });
     return;
   }
 
@@ -303,7 +351,10 @@ const server = createServer((req, res) => {
   handle(req, res).catch((err) => {
     console.error("[web] request error:", err);
     if (!res.headersSent) {
-      sendJson(res, 500, { error: err instanceof Error ? err.message : String(err) });
+      const msg = err instanceof Error ? err.message : String(err);
+      // Surface validation errors to the caller; hide everything else.
+      const safe = /too large|invalid url|not allowed|invalid json/i.test(msg);
+      sendJson(res, 500, { error: safe ? msg : "Internal server error" });
     } else {
       res.end();
     }

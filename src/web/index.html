@@ -183,17 +183,6 @@
           <option value="commercial" selected>commercial — summary + findings</option>
         </select>
       </div>
-      <div class="field"><label for="interval">Check interval</label>
-        <select id="interval">
-          <option value="">global default</option>
-          <option value="15">every 15 min</option>
-          <option value="30">every 30 min</option>
-          <option value="60">every hour</option>
-          <option value="360">every 6 hours</option>
-          <option value="720">every 12 hours</option>
-          <option value="1440">every 24 hours</option>
-        </select>
-      </div>
       <button id="add">Add to watchlist</button>
       <div class="filtered-note" id="toast" style="color:var(--sev-critical)"></div>
 
@@ -382,13 +371,6 @@ function outcomeHtml(name, o) {
   </div>`;
 }
 
-function intervalLabel(minutes) {
-  if (!minutes) return "global";
-  if (minutes < 60) return `${minutes}m`;
-  if (minutes < 1440) return `${minutes / 60}h`;
-  return `${minutes / 1440}d`;
-}
-
 function docHtml(d) {
   return `<div class="doc">
     <div class="row">
@@ -401,7 +383,6 @@ function docHtml(d) {
     <div class="controls">
       <button class="small" data-check="${d.id}">Check now</button>
       <button class="small ghost" data-history="${d.id}">History</button>
-      <button class="small ghost" data-edit="${d.id}" data-interval="${d.check_interval_minutes ?? ""}">&#9201; ${esc(intervalLabel(d.check_interval_minutes))}</button>
     </div>
   </div>`;
 }
@@ -467,17 +448,15 @@ async function withBusy(btn, fn) {
 
 $("add").addEventListener("click", () => withBusy($("add"), async () => {
   $("toast").textContent = "";
-  const intervalVal = $("interval").value;
   const body = {
     url: $("url").value.trim(),
     name: $("name").value.trim(),
     vendor: $("vendor").value.trim(),
     tier: $("tier").value,
-    check_interval_minutes: intervalVal ? Number(intervalVal) : null,
   };
   if (!body.url || !body.name) { $("toast").textContent = "URL and name are required."; return; }
   await postJSON("/api/documents", body);
-  $("url").value = ""; $("name").value = ""; $("vendor").value = ""; $("interval").value = "";
+  $("url").value = ""; $("name").value = ""; $("vendor").value = "";
   await loadDocs();
 }));
 
@@ -530,21 +509,6 @@ $("docs").addEventListener("click", async (e) => {
           { status: "changed", summary: c.summary, diff: c.diff_text, findings: c.findings }));
       }
     });
-  } else if (e.target.hasAttribute("data-edit")) {
-    const id = e.target.getAttribute("data-edit");
-    const current = e.target.getAttribute("data-interval");
-    const OPTS = [["", "global default"], ["15", "15 min"], ["30", "30 min"], ["60", "1 hour"], ["360", "6 hours"], ["720", "12 hours"], ["1440", "24 hours"]];
-    const choice = prompt(
-      "Set check interval for this document:\n" +
-      OPTS.map(([v, l], i) => `${i + 1}. ${l}${v === current ? " \u2713" : ""}`).join("\n") +
-      "\n\nEnter number (1-7):"
-    );
-    if (!choice) return;
-    const idx = Number(choice) - 1;
-    if (idx < 0 || idx >= OPTS.length) return;
-    const [val] = OPTS[idx];
-    await postJSON(`/api/documents/${id}`, { check_interval_minutes: val ? Number(val) : null }, "PATCH");
-    await loadDocs();
   }
 });
 

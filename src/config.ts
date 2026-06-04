@@ -18,7 +18,7 @@ export const config = {
   /** Web dashboard port. */
   port: Number(process.env.PORT ?? 4000),
   /** Scheduler interval in minutes (used by `npm run schedule` and autopoll). */
-  pollIntervalMinutes: Number(process.env.POLL_INTERVAL_MINUTES ?? 60),
+  pollIntervalMinutes: Number(process.env.POLL_INTERVAL_MINUTES ?? 1440),
   /** When true, the web server also runs the scheduler in-process. */
   webAutopoll: process.env.WEB_AUTOPOLL === "true",
   /** Optional: enables the Gemini classifier. Empty => offline heuristic. */

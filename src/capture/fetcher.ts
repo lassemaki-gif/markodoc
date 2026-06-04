@@ -17,7 +17,35 @@ export interface FetchResult {
  * swap this for a real readability pass (e.g. @mozilla/readability + linkedom)
  * so that boilerplate navigation does not create noisy diffs.
  */
+const PRIVATE_IP = [
+  /^localhost$/i,
+  /^0\.0\.0\.0$/,
+  /^127\./,
+  /^10\./,
+  /^172\.(1[6-9]|2\d|3[01])\./,
+  /^192\.168\./,
+  /^169\.254\./,           // link-local
+  /^::1$/,
+  /^fc[0-9a-f]{2}:/i,      // IPv6 unique-local fc::/7
+  /^fd[0-9a-f]{2}:/i,
+  /^metadata\.google\.internal$/i,
+  /\.internal$/i,
+];
+
+function validateFetchUrl(raw: string): void {
+  let parsed: URL;
+  try { parsed = new URL(raw); } catch { throw new Error("Invalid URL"); }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error("Only http and https URLs are allowed");
+  }
+  const host = parsed.hostname.toLowerCase();
+  if (PRIVATE_IP.some((re) => re.test(host))) {
+    throw new Error("Requests to internal addresses are not allowed");
+  }
+}
+
 export async function fetchTerms(url: string): Promise<FetchResult> {
+  validateFetchUrl(url);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), config.fetchTimeoutMs);
 
