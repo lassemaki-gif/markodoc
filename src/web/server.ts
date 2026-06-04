@@ -175,8 +175,17 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
     const vendor = body.vendor ? String(body.vendor).trim() : null;
     const rawInterval = Number(body.check_interval_minutes);
     const check_interval_minutes = rawInterval > 0 ? rawInterval : null;
-    const document = addDocument({ url: docUrl, name, vendor, tier, check_interval_minutes });
-    sendJson(res, 201, { document });
+    try {
+      const document = addDocument({ url: docUrl, name, vendor, tier, check_interval_minutes });
+      sendJson(res, 201, { document });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("UNIQUE constraint failed")) {
+        sendJson(res, 409, { error: "This URL is already in the watchlist." });
+      } else {
+        throw err;
+      }
+    }
     return;
   }
 
