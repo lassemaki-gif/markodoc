@@ -118,6 +118,16 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
     return;
   }
 
+  // Allow healthcheck through without auth.
+  if (method === "GET" && path === "/api/status") {
+    sendJson(res, 200, {
+      classifier: getProvider().name,
+      autopoll: config.webAutopoll,
+      pollIntervalMinutes: config.pollIntervalMinutes,
+    });
+    return;
+  }
+
   if (!isAuthenticated(req)) {
     if (path.startsWith("/api/")) {
       sendJson(res, 401, { error: "Unauthorized" });

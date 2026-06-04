@@ -3,7 +3,7 @@ builder = "nixpacks"
 
 [deploy]
 startCommand = "npm run serve"
-healthcheckPath = "/auth/login"
-healthcheckTimeout = 30
+healthcheckPath = "/api/status"
+healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
