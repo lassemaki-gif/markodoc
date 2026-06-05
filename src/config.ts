@@ -38,4 +38,6 @@ export const config = {
   smtpFrom: process.env.SMTP_FROM ?? "MarkoDoc <noreply@markodoc.local>",
   /** Comma-separated list of recipient emails. */
   notifyEmailTo: process.env.NOTIFY_EMAIL_TO ?? "",
+  /** Public base URL shown in email footers (e.g. https://markodoc.cloud). */
+  baseUrl: process.env.BASE_URL ?? "",
 };

@@ -344,6 +344,14 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
     return;
   }
 
+  if (method === "POST" && path === "/api/test-notify") {
+    const { sendEmail } = await import("../notify/email.js");
+    const testDoc = { id: 0, name: "MarkoDoc test", url: config.baseUrl || "https://markodoc.cloud", vendor: null, tier: "commercial" as const, active: 1, created_at: new Date().toISOString(), check_interval_minutes: null, last_checked_at: null };
+    await sendEmail({ document: testDoc, summary: "This is a test notification from MarkoDoc.", findings: [] });
+    sendJson(res, 200, { ok: true, to: config.notifyEmailTo || "(not set)" });
+    return;
+  }
+
   sendJson(res, 404, { error: "Not found" });
 }
 

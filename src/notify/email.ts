@@ -35,7 +35,7 @@ function buildHtml(doc: MonitoredDocument, summary: string, findings: Finding[])
   ${rows ? `
   <h3 style="font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#888;margin:0 0 8px">Findings</h3>
   <table style="width:100%;border-collapse:collapse;font-size:14px">${rows}</table>` : ""}
-  <p style="margin-top:32px;font-size:12px;color:#aaa;border-top:1px solid #eee;padding-top:16px">Sent by MarkoDoc — <a href="http://localhost:${config.port}" style="color:#aaa">open dashboard</a></p>
+  <p style="margin-top:32px;font-size:12px;color:#aaa;border-top:1px solid #eee;padding-top:16px">Sent by MarkoDoc — <a href="${config.baseUrl || `http://localhost:${config.port}`}" style="color:#aaa">open dashboard</a></p>
 </body></html>`;
 }
 
